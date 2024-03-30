@@ -1,0 +1,41 @@
+variant: flatcar
+version: 1.1.0
+
+systemd:
+  units:
+    - name: "coreos-metadata.service"
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Flatcar Metadata Agent
+        After=nss-lookup.target
+        After=network-online.target
+        Wants=network-online.target
+        [Service]
+        Type=oneshot
+        Restart=on-failure
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/coreos-metadata --cmdline --attributes=/run/metadata/flatcar
+        ExecStartPost=/usr/bin/sed --in-place "s/AFTERBURN/COREOS/g ; s/AWS/EC2/g ; s/GCP/GCE/g" /run/metadata/flatcar
+        ExecStartPost=/usr/bin/ln -fs /run/metadata/flatcar /run/metadata/coreos
+        [Install]
+        RequiredBy=system-config.target
+        Alias=afterburn.service
+    - name: "coreos-metadata-sshkeys@root.service"
+      enabled: true
+    - name: "coreos-metadata-hostname.service"
+      # The unit in initramfs has restrictive conditions on the OEM platform that do not include Hetzner
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Flatcar Metadata Agent Hostname
+        After=coreos-metadata.service
+        Requires=coreos-metadata.service
+        [Service]
+        EnvironmentFile=/run/metadata/flatcar
+        Type=oneshot
+        Restart=on-failure
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/hostnamectl hostname "${COREOS_COREOS_HETZNER_HOSTNAME}"
+        [Install]
+        RequiredBy=system-config.target
