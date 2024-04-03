@@ -40,7 +40,7 @@ Data (Ignition) will work as expected.
 
 ```shell
 # Get ID of the most recent flatcar snapshot for x86
-$ SNAPSHOT_ID=$(hcloud image list --type=snapshot --selector=os=flatcar --architecture=x86 -o=columns=id -o noheader --sort=created:desc | head)
+$ SNAPSHOT_ID=$(hcloud image list --type=snapshot --selector=os=flatcar --architecture=x86 -o=columns=id -o noheader --sort=created:desc | head -n1)
 
 # Create a new server
 # If you have, you can specify an Ignition config with `--user-data-from-file ignition-user.json`
