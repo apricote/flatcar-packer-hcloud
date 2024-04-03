@@ -81,12 +81,19 @@ build {
       "chmod +x flatcar-install",
 
       # Install flatcar
-      "./flatcar-install -s -C ${var.flatcar_channel} -i /ignition.json",
+      "./flatcar-install -s -C ${var.flatcar_channel}",
 
-      # Setup Kernel Parameters for OEM Platform
+      # Setup Ignition Config & Kernel Parameters for OEM Platform
       "mkdir /root/OEM",
       "mount /dev/disk/by-label/OEM /root/OEM",
+
+      ## Kernel Parameter
       "echo 'set oem_id=${local.flatcar_oem_id}' > /root/OEM/grub.cfg",
+
+      ## Base Ignition Config (merged with user data)
+      "mkdir /root/OEM/base",
+      "cp /ignition.json /root/OEM/base/base.ign",
+
       "umount /root/OEM",
     ]
   }
