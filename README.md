@@ -1,35 +1,46 @@
 # Build Flatcar Snapshots on Hetzner Cloud with Packer
 
+> [!IMPORTANT]
+> This version of the README describes the process to build & test Hetzner OEM images using the Draft PR [flatcar/scripts#1880](https://github.com/flatcar/scripts/pull/1880).
+> If you are a user looking to install Flatcar on Hetzner Cloud right now, you can check out the [`main` branch](https://github.com/apricote/flatcar-packer-hcloud/) of this repo.
+
 ## Requirements
 
 - [Hetzner Cloud API Token](https://docs.hetzner.com/cloud/api/getting-started/generating-api-token/)
 - [Packer](https://developer.hashicorp.com/packer)
-- [Butane](https://coreos.github.io/butane/)
 - [Hetzner Cloud CLI](https://github.com/hetznercloud/cli) (`hcloud`)
 
-This only works on Flatcar version `3913.0.0` (or later), as this version has the appropriate versions of
-`ignition` and `afterburn` that include support for the Hetzner Cloud metadata service.
+## Building Image
+
+See https://www.flatcar.org/docs/latest/reference/developer-guides/sdk-modifying-flatcar/
+
+```
+./build_packages
+./build_image --replace
+./image_to_vm --format hetzner
+```
 
 ## Building Snapshots
 
-```shell
-$ git clone ... # TODO
-$ export HCLOUD_TOKEN=<Your Hetzner Cloud API Token>
-$ packer init flatcar.pkr.hcl
-$ butane butane-oem.yaml --pretty --strict --output=ignition-oem.json
+In Hetzner Cloud, you can create a "Snapshot" of your server's disk. You can then use these snapshots to create new servers.
 
-# This will build Snapshots for x86 and arm. If you only need one, you can add
-# `--only=hcloud.x86` or `--only=hcloud.arm` to the `packer build` command.
-$ packer build flatcar.pkr.hcl
+We will use Packer and the flatcar-install script to write the image we built in the previous step to the disk and then create a snapshot.
+
+```shell
+$ git clone --branch oem-image https://github.com/apricote/flatcar-packer-hcloud.git
+$ cd flatcar-packer-hcloud
+$ export HCLOUD_TOKEN=<Your Hetzner Cloud API Token>
+$ packer init .
+
+# This will build the Snapshot for x86. You need to specify the path to your local image file.
+$ packer build . -var image_path=/path/to/flatcar_production_hetzner_image.bin.bz2
 # ... Takes a few minutes
 ==> Builds finished. The artifacts of successful builds are:
---> hcloud.x86: A snapshot was created: 'flatcar-alpha-x86' (ID: 157132241)
---> hcloud.arm: A snapshot was created: 'flatcar-alpha-arm' (ID: 157132252)
+--> hcloud.x86: A snapshot was created: 'flatcar-x86' (ID: 157132241)
 
 $ hcloud image list --type=snapshot --selector=os=flatcar
-ID          TYPE       NAME   DESCRIPTION         ARCHITECTURE   IMAGE SIZE   DISK SIZE   CREATED                        DEPRECATED
-157132241   snapshot   -      flatcar-alpha-x86   x86            0.47 GB      20 GB       Sat Mar 30 16:48:22 CET 2024   -
-157132252   snapshot   -      flatcar-alpha-arm   arm            0.42 GB      40 GB       Sat Mar 30 16:48:24 CET 2024   -
+ID          TYPE       NAME   DESCRIPTION   ARCHITECTURE   IMAGE SIZE   DISK SIZE   CREATED                        DEPRECATED
+157132241   snapshot   -      flatcar-x86   x86            0.47 GB      20 GB       Sat Mar 30 16:48:22 CET 2024   -
 ```
 
 ## Create a Server
@@ -48,5 +59,5 @@ $ hcloud server create --name flatcar-test --image $SNAPSHOT_ID --type cx11 --ss
 # Wait about a minute or two for the server to be started
 
 # Now you can login, the following is a helper that calls `ssh` with the public ipv4 address of the server
-$ hcloud server ssh flatcar-test
+$ hcloud server ssh -u core flatcar-test
 ```

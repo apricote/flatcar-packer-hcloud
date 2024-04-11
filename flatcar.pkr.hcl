@@ -26,9 +26,9 @@ variable "flatcar_install_script" {
     default = "https://raw.githubusercontent.com/flatcar/init/flatcar-master/bin/flatcar-install"
 }
 
-variable "flatcar_channel" {
-  type    = string
-  default = "alpha"
+variable "image_path" {
+  type = string
+  description = "absolute local file path to the hetzner image (.bin.bz2)"
 }
 
 locals {
@@ -47,7 +47,6 @@ source "hcloud" "flatcar" {
 
   snapshot_labels = {
     os              = "flatcar"
-    "flatcar.channel" = var.flatcar_channel
   }
 
   ssh_username = "root"
@@ -58,43 +57,30 @@ build {
   source "hcloud.flatcar" {
     name = "x86"
     server_type = var.hcloud_server_type["x86"]
-    snapshot_name = "flatcar-${var.flatcar_channel}-x86"
+    snapshot_name = "flatcar-x86"
   }
 
-  source "hcloud.flatcar" {
-    name = "arm"
-    server_type = var.hcloud_server_type["arm"]
-    snapshot_name = "flatcar-${var.flatcar_channel}-arm"
-  }
+  #source "hcloud.flatcar" {
+  #  name = "arm"
+  #  server_type = var.hcloud_server_type["arm"]
+  #  snapshot_name = "flatcar-arm"
+  #}
+
 
   provisioner "file" {
-    source      = "ignition-oem.json"
-    destination = "/ignition.json"
+    source      = var.image_path
+    destination = "/flatcar_production_hetzner_image.bin.bz2"
   }
 
   provisioner "shell" {
     inline = [
       # Download script and dependencies
-      "apt-get update",
       "apt-get -y install gawk",
       "curl -fsSLO --retry-delay 1 --retry 60 --retry-connrefused --retry-max-time 60 --connect-timeout 20 ${var.flatcar_install_script}",
       "chmod +x flatcar-install",
 
       # Install flatcar
-      "./flatcar-install -s -C ${var.flatcar_channel}",
-
-      # Setup Ignition Config & Kernel Parameters for OEM Platform
-      "mkdir /root/OEM",
-      "mount /dev/disk/by-label/OEM /root/OEM",
-
-      ## Kernel Parameter
-      "echo 'set oem_id=${local.flatcar_oem_id}' > /root/OEM/grub.cfg",
-
-      ## Base Ignition Config (merged with user data)
-      "mkdir /root/OEM/base",
-      "cp /ignition.json /root/OEM/base/base.ign",
-
-      "umount /root/OEM",
+      "./flatcar-install -v -s -o hetzner -f /flatcar_production_hetzner_image.bin.bz2",
     ]
   }
 }
