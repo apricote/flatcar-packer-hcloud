@@ -17,7 +17,7 @@ See https://www.flatcar.org/docs/latest/reference/developer-guides/sdk-modifying
 ```
 ./build_packages
 ./build_image --replace
-./image_to_vm --format hetzner
+./image_to_vm.sh --format hetzner
 ```
 
 ## Building Snapshots
@@ -33,8 +33,9 @@ $ export HCLOUD_TOKEN=<Your Hetzner Cloud API Token>
 $ packer init .
 
 # This will build the Snapshot for x86. You need to specify the path to your local image file.
-$ packer build . -var image_path=/path/to/flatcar_production_hetzner_image.bin.bz2
+$ packer build -var image_path=/path/to/flatcar_production_hetzner_image.bin.bz2 .
 # ... Takes a few minutes
+# It sometimes hangs on "==> hcloud.x86: + trap - EXIT", running with `PACKER_LOG=1` fixes it for me.
 ==> Builds finished. The artifacts of successful builds are:
 --> hcloud.x86: A snapshot was created: 'flatcar-x86' (ID: 157132241)
 
