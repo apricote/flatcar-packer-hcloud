@@ -10,38 +10,30 @@
 - [Packer](https://developer.hashicorp.com/packer)
 - [Hetzner Cloud CLI](https://github.com/hetznercloud/cli) (`hcloud`)
 
-## Building Image
-
-See https://www.flatcar.org/docs/latest/reference/developer-guides/sdk-modifying-flatcar/
-
-```
-./build_packages
-./build_image --replace
-./image_to_vm.sh --format hetzner
-```
-
 ## Building Snapshots
 
 In Hetzner Cloud, you can create a "Snapshot" of your server's disk. You can then use these snapshots to create new servers.
 
-We will use Packer and the flatcar-install script to write the image we built in the previous step to the disk and then create a snapshot.
+We will use Packer and the `flatcar-install` script to write the pre-built images from Flatcar CI to the disk and then create a snapshot.
 
 ```shell
-$ git clone --branch oem-image https://github.com/apricote/flatcar-packer-hcloud.git
+$ git clone --branch oem-image-prebuilt https://github.com/apricote/flatcar-packer-hcloud.git
 $ cd flatcar-packer-hcloud
 $ export HCLOUD_TOKEN=<Your Hetzner Cloud API Token>
 $ packer init .
 
 # This will build the Snapshot for x86. You need to specify the path to your local image file.
-$ packer build -var image_path=/path/to/flatcar_production_hetzner_image.bin.bz2 .
+$ packer build .
 # ... Takes a few minutes
 # It sometimes hangs on "==> hcloud.x86: + trap - EXIT", running with `PACKER_LOG=1` fixes it for me.
 ==> Builds finished. The artifacts of successful builds are:
 --> hcloud.x86: A snapshot was created: 'flatcar-x86' (ID: 157132241)
+--> hcloud.arm: A snapshot was created: 'flatcar-arm' (ID: 157132242)
 
 $ hcloud image list --type=snapshot --selector=os=flatcar
 ID          TYPE       NAME   DESCRIPTION   ARCHITECTURE   IMAGE SIZE   DISK SIZE   CREATED                        DEPRECATED
 157132241   snapshot   -      flatcar-x86   x86            0.47 GB      20 GB       Sat Mar 30 16:48:22 CET 2024   -
+157132242   snapshot   -      flatcar-arm   arm            0.44 GB      20 GB       Sat Mar 30 16:48:22 CET 2024   -
 ```
 
 ## Create a Server
