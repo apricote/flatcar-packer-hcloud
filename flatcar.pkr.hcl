@@ -21,14 +21,19 @@ variable "hcloud_server_type" {
   }
 }
 
+variable "image_base_url" {
+  type = string
+  default = "https://bincache.flatcar-linux.net/images"
+}
+
+variable "image_version_id" {
+  type = string
+  default = "9999.0.0+hetzner"
+}
+
 variable "flatcar_install_script" {
     type    = string
     default = "https://raw.githubusercontent.com/flatcar/init/flatcar-master/bin/flatcar-install"
-}
-
-variable "image_path" {
-  type = string
-  description = "absolute local file path to the hetzner image (.bin.bz2)"
 }
 
 locals {
@@ -36,6 +41,11 @@ locals {
   hcloud_rescue = "linux64"
   hcloud_initial_os = "ubuntu-22.04"
   flatcar_oem_id = "hetzner"
+
+  board = {
+    x86 = "amd64"
+    arm = "arm64"
+  }
 }
 
 source "hcloud" "flatcar" {
@@ -60,16 +70,10 @@ build {
     snapshot_name = "flatcar-x86"
   }
 
-  #source "hcloud.flatcar" {
-  #  name = "arm"
-  #  server_type = var.hcloud_server_type["arm"]
-  #  snapshot_name = "flatcar-arm"
-  #}
-
-
-  provisioner "file" {
-    source      = var.image_path
-    destination = "/flatcar_production_hetzner_image.bin.bz2"
+  source "hcloud.flatcar" {
+    name = "arm"
+    server_type = var.hcloud_server_type["arm"]
+    snapshot_name = "flatcar-arm"
   }
 
   provisioner "shell" {
@@ -80,7 +84,7 @@ build {
       "chmod +x flatcar-install",
 
       # Install flatcar
-      "./flatcar-install -v -s -o hetzner -f /flatcar_production_hetzner_image.bin.bz2",
+      "./flatcar-install -v -s -o hetzner -b ${var.image_base_url}/${local.board[source.name]} -V ${var.image_version_id}",
     ]
   }
 }
