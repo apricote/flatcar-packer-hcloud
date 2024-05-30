@@ -34,25 +34,18 @@ variable "version" {
 variable "labels" {
   // Available replacements:
   // $architecture
-  // $board
   // $channel
   // $version - if "current" was specified, this is resolved to the actual version
   type = map(string)
   default = {
     os              = "flatcar"
     flatcar-channel = "$channel"
-    flatcar-board   = "$board"
     version         = "$version"
     architecture    = "$architecture"
   }
 }
 
 locals {
-  boards = {
-    x86 = "amd64-usr"
-    arm = "arm64-usr"
-  }
-
   architectures = ["x86", "arm"]
 
   // If the user wants the "current" version, we still want to make the
@@ -89,11 +82,10 @@ build {
       snapshot_name = "flatcar-${var.channel}-${local.version}-${source.value}"
 
       snapshot_labels = {
-        for k, v in var.labels : k => replace(replace(replace(replace(v,
+        for k, v in var.labels : k => replace(replace(replace(v,
           "$channel", var.channel),
           "$version", local.version),
-          "$architecture", source.value),
-          "$board", local.boards[source.value])
+          "$architecture", source.value)
       }
     }
   }
@@ -106,7 +98,7 @@ build {
       "chmod +x flatcar-install",
 
       # Install flatcar
-      "./flatcar-install -s -o hetzner -C ${var.channel} -B ${local.boards[source.name]} -V ${var.version} ",
+      "./flatcar-install -s -o hetzner -C ${var.channel} -V ${var.version} ",
     ]
   }
 }

@@ -70,7 +70,6 @@ for [`cluster-api-provider-hetzner`](https://github.com/syself/cluster-api-provi
 The following variables are supported:
 
 - `$architecture`: The Hetzner Cloud API architecture (`x86` or `arm`).
-- `$board`: The Flatcar Board identifier for the architecture (`amd64-usr` or `arm64-usr`).
 - `$version`: The Flatcar version, if you are using `current`, this is resolved to the actual version in the snapshot.
 - `$channel`: The Flatcar release channel.
 
@@ -78,7 +77,6 @@ The default labels are:
 
 - `os=flatcar`
 - `flatcar-channel=$channel`
-- `flatcar-board=$board`
 - `version=$version`
 - `architecture=$architecture`
 
