@@ -16,47 +16,47 @@ variable "hcloud_token" {
 variable "hcloud_server_type" {
   type = map(string)
   default = {
-      x86 = "cx11"
-      arm = "cax11"
+    x86 = "cx11"
+    arm = "cax11"
   }
 }
 
-variable "image_base_url" {
-  type = string
-  default = "https://bincache.flatcar-linux.net/images"
+variable "channel" {
+  type    = string
+  default = "beta"
 }
 
 variable "image_version_id" {
-  type = string
-  default = "9999.0.0+hetzner"
+  type    = string
+  default = "current"
 }
 
 variable "flatcar_install_script" {
-    type    = string
-    default = "https://raw.githubusercontent.com/flatcar/init/flatcar-master/bin/flatcar-install"
+  type    = string
+  default = "https://raw.githubusercontent.com/flatcar/init/flatcar-master/bin/flatcar-install"
 }
 
 locals {
-  hcloud_location = "fsn1"
-  hcloud_rescue = "linux64"
+  hcloud_location   = "fsn1"
+  hcloud_rescue     = "linux64"
   hcloud_initial_os = "ubuntu-22.04"
-  flatcar_oem_id = "hetzner"
+  flatcar_oem_id    = "hetzner"
 
   board = {
-    x86 = "amd64"
-    arm = "arm64"
+    x86 = "amd64-usr"
+    arm = "arm64-usr"
   }
 }
 
 source "hcloud" "flatcar" {
   token = var.hcloud_token
 
-  image       = local.hcloud_initial_os
-  location    = local.hcloud_location
-  rescue      = local.hcloud_rescue
+  image    = local.hcloud_initial_os
+  location = local.hcloud_location
+  rescue   = local.hcloud_rescue
 
   snapshot_labels = {
-    os              = "flatcar"
+    os = "flatcar"
   }
 
   ssh_username = "root"
@@ -65,14 +65,14 @@ source "hcloud" "flatcar" {
 
 build {
   source "hcloud.flatcar" {
-    name = "x86"
-    server_type = var.hcloud_server_type["x86"]
+    name          = "x86"
+    server_type   = var.hcloud_server_type["x86"]
     snapshot_name = "flatcar-x86"
   }
 
   source "hcloud.flatcar" {
-    name = "arm"
-    server_type = var.hcloud_server_type["arm"]
+    name          = "arm"
+    server_type   = var.hcloud_server_type["arm"]
     snapshot_name = "flatcar-arm"
   }
 
@@ -84,7 +84,7 @@ build {
       "chmod +x flatcar-install",
 
       # Install flatcar
-      "./flatcar-install -v -s -o hetzner -b ${var.image_base_url}/${local.board[source.name]} -V ${var.image_version_id}",
+      "./flatcar-install -v -s -o hetzner -b https://${var.channel}.release.flatcar-linux.net/${local.board[source.name]} -V ${var.image_version_id}",
     ]
   }
 }
