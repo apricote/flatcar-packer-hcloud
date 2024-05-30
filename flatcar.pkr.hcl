@@ -93,7 +93,7 @@ build {
           "$channel", var.channel),
           "$version", local.version),
           "$architecture", source.value),
-          "$board", local.boards[source.name])
+          "$board", local.boards[source.value])
       }
     }
   }
