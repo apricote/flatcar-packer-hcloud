@@ -16,7 +16,7 @@ variable "hcloud_token" {
 variable "hcloud_server_type" {
   type = map(string)
   default = {
-    x86 = "cx11"
+    x86 = "cx22"
     arm = "cax11"
   }
 }
@@ -63,7 +63,7 @@ data "http" "version_info" {
 source "hcloud" "flatcar" {
   token = var.hcloud_token
 
-  image    = "ubuntu-22.04"
+  image    = "ubuntu-24.04"
   location = "fsn1"
   rescue   = "linux64"
 
@@ -74,7 +74,7 @@ source "hcloud" "flatcar" {
 build {
   dynamic "source" {
     for_each = local.architectures
-    labels   = ["hcloud.flatcar"]
+    labels = ["hcloud.flatcar"]
 
     content {
       name          = source.value
